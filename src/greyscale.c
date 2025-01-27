@@ -33,7 +33,7 @@ typedef struct
 } RGB;
 
 
-void grayscale(const char* inputFile){
+void greyscaleConvert(const char* inputFile){
     FILE* inputBMP = fopen(inputFile, "rb");
     if (!inputBMP){
         perror("Error opening file, are you sure it exists?");
@@ -82,8 +82,7 @@ void grayscale(const char* inputFile){
         fclose(outputBMP);
         exit(EXIT_FAILURE);
     }
-    printf("\nheight: %d", height);
-    printf("\nwidth: %d", width);
+
     for (int i = 0; i < (height > 0 ? height : -1 * height); i++){
       
         fread(row, rowSize, 1, inputBMP);
@@ -106,13 +105,3 @@ void grayscale(const char* inputFile){
 }
 
 
-
-int main(int argc, char* argv[]){
-
-    if (argc != 2){
-        fprintf(stderr, "Usage: %s <input .bmp file>", argv[0]);
-    }
-    grayscale(argv[1]);
-    return EXIT_SUCCESS;
-
-}

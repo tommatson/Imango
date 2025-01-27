@@ -1,0 +1,1 @@
+void greyscaleConvert(const char* inputFile);
