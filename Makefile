@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Iinclude
-SRC = src/main.c src/greyscale.c
+SRC = src/main.c src/greyscale.c src/mango-maths.c
 OBJ = $(SRC:.c=.o)
 TARGET = build/main
 

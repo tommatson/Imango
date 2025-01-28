@@ -1,0 +1,3 @@
+double power(double base, int exponent);
+double truncate(double number, int places);
+double round(double number, int places);
