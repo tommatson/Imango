@@ -6,35 +6,14 @@
 
 #define pi 3.1415926535897932
 
-long double power(double a, int b){
-    long double c = 1;
-    if (b==1){
-        return  (long double) a;
-    }
-    while (b > 1){
-        if((b % 2) == 1){
-            // b is odd
-            c *= a;
-            b--;
-        } 
-        c *= (a * a);
-        b /= 2;
-        
-    }
-    return c;
-}
-long double factorial(int a){
-    long double c = 1;
-    for(int i = 2; i < (a+1); i++){
-        c*=i;
-    }
-    return c;
-}
-
 double approximateExponential(double squaredPart){
     double exponentialSum = 1;
+    double term = 1.0;
     for (int j = 1; j < 100; j++){
-        exponentialSum += power(squaredPart, j) / factorial(j);
+        term *= squaredPart / j;
+        // Stop if its getting really small (we don't need that amount of accuracy)
+        if((term > 0 ? term : (-1 * term)) < 1e-10) break;
+        exponentialSum += term;
     } 
     return exponentialSum;
 }
@@ -92,7 +71,7 @@ int main(int argc, char* argv[]){
     //printf("%f", power(atoi(argv[1]), atof(argv[2])));
     printf("\n%d", atof(argv[1]));
     double x = 5.0;
-    printf("\n%lf", approximateExponential(x));
+    printf("\n%lf", approximateExponential(atof(argv[1])));
     //greyscaleConvert(argv[1]);
     return EXIT_SUCCESS;
 
