@@ -67,7 +67,10 @@ double calculateKernelItem(float stanDev, int i, int kernelWidth){
     
 }
 
+FILE* writeHeaders (FILE* inputFile){
 
+    
+}
 
 void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     if (kernelWidth % 2 != 1){
@@ -94,6 +97,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     }
     printf("\nsum:%lf", kernelMagnitude);
 
+    // FILE WRITING ---------------------------
 
     FILE* inputBMP = fopen(inputFile, "rb");
     if (!inputBMP){
@@ -137,7 +141,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     int rowSize = (((width * 3) + 3) & ~3);// Times by 3 because 3 bytes per pixel, add on 3 to account for padding (padding can be 0-3) then & with !3 to round to a multiple of 4
     unsigned char* row = malloc(rowSize); // Used top hold the row read from the BMP file
 
-
+    // TRANSLATED PIXEL WRITING ------------------------
     
     if(!row){
         perror("Memory allocation failed");
@@ -150,7 +154,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     int kernelRowSize;
     bool incrementKernel = false;
     printf("hawk tuah\n");
-    long kernelPosition = ftell(inputFile);
+    long kernelPosition = ftell(inputBMP);
     printf("i was in ohio when i met you\n");
     for (int i = 0; i < (height > 0 ? height : -1 * height); i++){
         // These if statements calculate the memory required for the kernel in horizontal strips
@@ -177,15 +181,15 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         }
         if(incrementKernel){
             // Increment the read position
-            fseek(inputFile, rowSize, SEEK_CUR);
+            fseek(inputBMP, rowSize, SEEK_CUR);
             
         } 
         // Save the position
-        kernelPosition = ftell(inputFile);
+        kernelPosition = ftell(inputBMP);
         // Read what we need to read 
         fread(kernelRow, kernelRowSize, 1, inputBMP);
         // Go back to the position we were at 
-        fseek(inputFile, kernelPosition, SEEK_SET);
+        fseek(inputBMP, kernelPosition, SEEK_SET);
         
         
         for (int j = 0; j < (kernelRowSize / rowSize); j++){
