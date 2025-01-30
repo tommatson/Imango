@@ -159,19 +159,22 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     for (int i = 0; i < (height > 0 ? height : -1 * height); i++){
         // These if statements calculate the memory required for the kernel in horizontal strips
         printf("Height I value: %d\n", i);
-        if ((height - i) <= kernelWidth / 2){
+        if (((height > 0 ? height : -1 * height) - i) <= kernelWidth / 2){
+            printf("Bottom I: %d", i);
             // In this one the kernel will now go over the image size
             // Imagine a 3x3 kernel on the final row of pixels, the bottom row of the kernel is out the image right? So this code calculates that the kernel needs to be a size of 2
-            kernelRowSize = rowSize * ((kernelWidth / 2) + (height - i));
+            kernelRowSize = rowSize * ((kernelWidth / 2) + ((height > 0 ? height : -1 * height) - i));
             kernelRow = malloc(kernelRowSize);
             incrementKernel = true;
         } else {
             if ((kernelWidth / 2) + i + 1 > kernelWidth){
+                printf("Mid I: %d", i);
                 // Here the entire kernel can fit within the image so we continue at its full size and increment it
                 kernelRowSize = rowSize * kernelWidth;
                 kernelRow = malloc(kernelRowSize);
                 incrementKernel = true;
             } else {
+                printf("Top I: %d", i);
                 // Here the kernel is at the top of the image
                 // Imagine a 3x3 kernel with out target row being row 0 of the image, the top of the kernel is cut off so we need the row and the row below it
                 kernelRowSize = rowSize * ((kernelWidth / 2) + i + 1);
