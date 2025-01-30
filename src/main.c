@@ -53,7 +53,7 @@ double approximateExponential(double squaredPart){
 }
 
 
-float calculateKernelItem(float stanDev, int i, int kernelWidth){
+double calculateKernelItem(float stanDev, int i, int kernelWidth){
     // Calculate x value within the kernel
     int x = (kernelWidth / 2) - (i - (kernelWidth * (i / kernelWidth)));
     // Calculate y value within the kernel
@@ -63,7 +63,6 @@ float calculateKernelItem(float stanDev, int i, int kernelWidth){
     // Estimating the exponential using the taylor series
     double exponentialPart = approximateExponential(squaredPart);
     // Finally, calculate the gaussian value
-    printf("\nGauss: %lf", truncate(((1/(2 * pi * stanDev * stanDev)) * exponentialPart), 3));
     return round(((1/(2 * pi * stanDev * stanDev)) * exponentialPart), 3);
     
 }
@@ -77,9 +76,9 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     }
     // For canny edge detection image should first be converted to greyscale
     // the stanDev parameter stores the standard deviation for the gaussian blur function, I recommend using 1
-    unsigned int kernelSpace = sizeof(float) * (kernelWidth * kernelWidth);
+    unsigned int kernelSpace = sizeof(double) * (kernelWidth * kernelWidth);
     // malloc the kernel
-    float* kernel = (float*)malloc(kernelSpace);
+    double* kernel = (double*)malloc(kernelSpace);
 
     if (!kernel){
         perror("Memory allocation failed");
@@ -91,7 +90,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     for (int i = 0; i < (kernelWidth * kernelWidth); i++){
         kernel[i] = calculateKernelItem(stanDev, i, kernelWidth);
         kernelMagnitude += kernel[i];
-        printf("\n::%lf", kernel[i]);
+        printf("\n%d::%lf", i, kernel[i]);
     }
     printf("\nsum:%lf", kernelMagnitude);
 
@@ -120,7 +119,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         exit(EXIT_FAILURE);
     }
     // Create the output file
-    char* outputFileName = (char*)malloc(strlen(inputFile) + 11); // size of inputfile + "greyscale" + \0
+    char* outputFileName = (char*)malloc(strlen(inputFile) + 10); // size of inputfile + "_gaussian" + \0
     strncpy(outputFileName, inputFile, (strlen(inputFile) - 4));
     strcat(outputFileName, "_gaussian.bmp\0");
     
@@ -128,7 +127,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     fwrite(&bmpHeader, sizeof(BMPheader), 1, outputBMP);
     fwrite(&dibHeader, sizeof(DIBheader), 1, outputBMP);
 
-    // Move the file pointer to the correct location to begin writing
+    // Move the file pointer to the correct location to begin reading and writing
     fseek(inputBMP, bmpHeader.offset, SEEK_SET);
     fseek(outputBMP, bmpHeader.offset, SEEK_SET);
     
@@ -146,33 +145,58 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         fclose(outputBMP);
         exit(EXIT_FAILURE);
     }
-
+    printf("gyatt\n");
     unsigned char* kernelRow;
+    int kernelRowSize;
     bool incrementKernel = false;
-    long kernelPosition;
-
+    printf("hawk tuah\n");
+    long kernelPosition = ftell(inputFile);
+    printf("i was in ohio when i met you\n");
     for (int i = 0; i < (height > 0 ? height : -1 * height); i++){
+        // These if statements calculate the memory required for the kernel in horizontal strips
+        printf("Height I value: %d\n", i);
         if ((height - i) <= kernelWidth / 2){
-            unsigned char* kernelRow = malloc(rowSize * ((kernelWidth / 2) + (height - i)));
-            incrementKernel = false;
+            // In this one the kernel will now go over the image size
+            // Imagine a 3x3 kernel on the final row of pixels, the bottom row of the kernel is out the image right? So this code calculates that the kernel needs to be a size of 2
+            kernelRowSize = rowSize * ((kernelWidth / 2) + (height - i));
+            kernelRow = malloc(kernelRowSize);
+            incrementKernel = true;
         } else {
             if ((kernelWidth / 2) + i + 1 > kernelWidth){
-                unsigned char* kernelRow = malloc(rowSize * kernelWidth);
+                // Here the entire kernel can fit within the image so we continue at its full size and increment it
+                kernelRowSize = rowSize * kernelWidth;
+                kernelRow = malloc(kernelRowSize);
                 incrementKernel = true;
             } else {
-                unsigned char* kernelRow = malloc(rowSize * ((kernelWidth / 2) + i + 1));
+                // Here the kernel is at the top of the image
+                // Imagine a 3x3 kernel with out target row being row 0 of the image, the top of the kernel is cut off so we need the row and the row below it
+                kernelRowSize = rowSize * ((kernelWidth / 2) + i + 1);
+                kernelRow = malloc(kernelRowSize);
                 incrementKernel = false;
             }
         }
-        fread(row, rowSize, 1, inputBMP);
-        for (int j = 0; j < (width > 0 ? width : -1 * width); j++){
-            RGB* individualPixel = (RGB *)&row[j*3]; // Set each pixel as a pointer to the pixel in row
+        if(incrementKernel){
+            // Increment the read position
+            fseek(inputFile, rowSize, SEEK_CUR);
+            
+        } 
+        // Save the position
+        kernelPosition = ftell(inputFile);
+        // Read what we need to read 
+        fread(kernelRow, kernelRowSize, 1, inputBMP);
+        // Go back to the position we were at 
+        fseek(inputFile, kernelPosition, SEEK_SET);
+        
+        
+        for (int j = 0; j < (kernelRowSize / rowSize); j++){
+            RGB* individualPixel = (RGB *)&kernelRow[j*3]; // Set each pixel as a pointer to the pixel in row
+            printf("\n%d: R: %d G: %d B: %d", j, individualPixel->red, individualPixel->blue, individualPixel->green);
             // Rewrite the RGB values for each pixel in row
             // Do the kernel stuff
             
         }
         // Write the gaussian row to the output file
-        fwrite(row, rowSize, 1, outputBMP);
+        // fwrite(row, rowSize, 1, outputBMP);
     }
     fclose(inputBMP);
     fclose(outputBMP);
@@ -184,7 +208,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
 
 
 int main(int argc, char* argv[]){
-
+    setbuf(stdout, NULL);
     if (argc != 4){
         fprintf(stderr, "Usage: %s <input .bmp file> <int kernel width> <standard deviation>", argv[0]);
         return EXIT_FAILURE;
