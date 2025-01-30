@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "greyscale.h"
 #include "mango-maths.h"
 
@@ -137,8 +138,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     int rowSize = (((width * 3) + 3) & ~3);// Times by 3 because 3 bytes per pixel, add on 3 to account for padding (padding can be 0-3) then & with !3 to round to a multiple of 4
     unsigned char* row = malloc(rowSize); // Used top hold the row read from the BMP file
 
-    int kernelRowSize = rowSize * kernelWidth;
-    unsigned char* kernelRow = malloc(kernelRowSize);
+
     
     if(!row){
         perror("Memory allocation failed");
@@ -146,15 +146,24 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         fclose(outputBMP);
         exit(EXIT_FAILURE);
     }
-    if(!kernelRow){
-        perror("Memory allocation failed");
-        fclose(inputBMP);
-        fclose(outputBMP);
-        exit(EXIT_FAILURE);
-    }
+
+    unsigned char* kernelRow;
+    bool incrementKernel = false;
+    long kernelPosition;
 
     for (int i = 0; i < (height > 0 ? height : -1 * height); i++){
-      
+        if ((height - i) <= kernelWidth / 2){
+            unsigned char* kernelRow = malloc(rowSize * ((kernelWidth / 2) + (height - i)));
+            incrementKernel = false;
+        } else {
+            if ((kernelWidth / 2) + i + 1 > kernelWidth){
+                unsigned char* kernelRow = malloc(rowSize * kernelWidth);
+                incrementKernel = true;
+            } else {
+                unsigned char* kernelRow = malloc(rowSize * ((kernelWidth / 2) + i + 1));
+                incrementKernel = false;
+            }
+        }
         fread(row, rowSize, 1, inputBMP);
         for (int j = 0; j < (width > 0 ? width : -1 * width); j++){
             RGB* individualPixel = (RGB *)&row[j*3]; // Set each pixel as a pointer to the pixel in row
