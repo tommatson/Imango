@@ -5,6 +5,10 @@
 #include "greyscale.h"
 #include "mango-maths.h"
 
+// Kill me 
+extern unsigned int sleep(unsigned int seconds);
+// Kill me no more
+
 
 #define pi 3.1415926535897932
 
@@ -149,16 +153,19 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         fclose(outputBMP);
         exit(EXIT_FAILURE);
     }
-    printf("gyatt\n");
+
     unsigned char* kernelRow;
     int kernelRowSize;
     bool incrementKernel = false;
-    printf("hawk tuah\n");
+
     long kernelPosition = ftell(inputBMP);
-    printf("i was in ohio when i met you\n");
+
+    int kernelMiddleIndex = 0;
+
     for (int i = 0; i < (height > 0 ? height : -1 * height); i++){
+        
         // These if statements calculate the memory required for the kernel in horizontal strips
-        printf("Height I value: %d\n", i);
+        printf("\nHeight I value: %d\n", i);
         if (((height > 0 ? height : -1 * height) - i) <= kernelWidth / 2){
             printf("Bottom I: %d", i);
             // In this one the kernel will now go over the image size
@@ -166,13 +173,15 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
             kernelRowSize = rowSize * ((kernelWidth / 2) + ((height > 0 ? height : -1 * height) - i));
             kernelRow = malloc(kernelRowSize);
             incrementKernel = true;
+            kernelMiddleIndex = kernelWidth / 2;
         } else {
-            if ((kernelWidth / 2) + i + 1 > kernelWidth){
+            if ((kernelWidth / 2) + i + 1 >= kernelWidth){
                 printf("Mid I: %d", i);
                 // Here the entire kernel can fit within the image so we continue at its full size and increment it
                 kernelRowSize = rowSize * kernelWidth;
                 kernelRow = malloc(kernelRowSize);
                 incrementKernel = true;
+                kernelMiddleIndex = kernelWidth / 2;
             } else {
                 printf("Top I: %d", i);
                 // Here the kernel is at the top of the image
@@ -180,6 +189,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
                 kernelRowSize = rowSize * ((kernelWidth / 2) + i + 1);
                 kernelRow = malloc(kernelRowSize);
                 incrementKernel = false;
+                kernelMiddleIndex = i;
             }
         }
         if(incrementKernel){
@@ -190,20 +200,27 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         // Save the position
         kernelPosition = ftell(inputBMP);
         // Read what we need to read 
+
         fread(kernelRow, kernelRowSize, 1, inputBMP);
         // Go back to the position we were at 
         fseek(inputBMP, kernelPosition, SEEK_SET);
+        printf("Balls: %d", (kernelRowSize / rowSize));
         
-        
-        for (int j = 0; j < (kernelRowSize / rowSize); j++){
+        for (int j = 0; j < ((width > 0 ? width : -1 * width) * (kernelRowSize / rowSize)); j++){
             RGB* individualPixel = (RGB *)&kernelRow[j*3]; // Set each pixel as a pointer to the pixel in row
-            printf("\n%d: R: %d G: %d B: %d", j, individualPixel->red, individualPixel->blue, individualPixel->green);
+            if ((j >= width * kernelMiddleIndex) && (j < (kernelMiddleIndex + 1) * width)){
+                RGB* targetPixel = (RGB *)&row[(j - (width * kernelMiddleIndex)) * 3];
+                targetPixel->red = individualPixel->red;
+                targetPixel->green = individualPixel->green;
+                targetPixel->blue = individualPixel->blue;
+            }
+           
             // Rewrite the RGB values for each pixel in row
             // Do the kernel stuff
             
         }
         // Write the gaussian row to the output file
-        // fwrite(row, rowSize, 1, outputBMP);
+        fwrite(row, rowSize, 1, outputBMP);
     }
     fclose(inputBMP);
     fclose(outputBMP);
@@ -220,7 +237,9 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "Usage: %s <input .bmp file> <int kernel width> <standard deviation>", argv[0]);
         return EXIT_FAILURE;
     }
+    //greyscaleConvert(argv[1]);
     gaussianConvert(argv[1], atoi(argv[2]), atof(argv[3]));
+    
     // //printf("%f", power(atoi(argv[1]), atof(argv[2])));
     // printf("\n%d", atof(argv[1]));
     // double x = 5.0;
