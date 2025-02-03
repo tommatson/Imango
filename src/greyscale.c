@@ -82,7 +82,7 @@ void greyscaleConvert(const char* inputFile){
         fclose(outputBMP);
         exit(EXIT_FAILURE);
     }
-
+    printf("Pixels in kernel: %d", ((width > 0 ? width : -1 * width)));
     for (int i = 0; i < (height > 0 ? height : -1 * height); i++){
       
         fread(row, rowSize, 1, inputBMP);

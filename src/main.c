@@ -192,11 +192,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
                 kernelMiddleIndex = i;
             }
         }
-        if(incrementKernel){
-            // Increment the read position
-            fseek(inputBMP, rowSize, SEEK_CUR);
-            
-        } 
+        
         // Save the position
         kernelPosition = ftell(inputBMP);
         // Read what we need to read 
@@ -204,16 +200,33 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         fread(kernelRow, kernelRowSize, 1, inputBMP);
         // Go back to the position we were at 
         fseek(inputBMP, kernelPosition, SEEK_SET);
-        printf("Balls: %d", (kernelRowSize / rowSize));
         
+        if(incrementKernel){
+            // Increment the read position
+            fseek(inputBMP, rowSize, SEEK_CUR);
+            
+        } 
+        printf("Pixels in kernel: %d", ((width > 0 ? width : -1 * width) * (kernelRowSize / rowSize)));
         for (int j = 0; j < ((width > 0 ? width : -1 * width) * (kernelRowSize / rowSize)); j++){
-            RGB* individualPixel = (RGB *)&kernelRow[j*3]; // Set each pixel as a pointer to the pixel in row
-            if ((j >= width * kernelMiddleIndex) && (j < (kernelMiddleIndex + 1) * width)){
-                RGB* targetPixel = (RGB *)&row[(j - (width * kernelMiddleIndex)) * 3];
+            RGB* individualPixel = (RGB *)&kernelRow[j * (sizeof(RGB))]; // Set each pixel as a pointer to the pixel in the kernel Rows
+            if (j < (width > 0 ? width : -1 * width)){
+                RGB* targetPixel  = (RGB*)&row[j * sizeof(RGB)];
                 targetPixel->red = individualPixel->red;
                 targetPixel->green = individualPixel->green;
                 targetPixel->blue = individualPixel->blue;
             }
+            
+
+            //printf("\nR: %d G: %d B: %d \n", individualPixel->red, individualPixel->green, individualPixel->blue);
+            // if ((j > ((width > 0 ? width : -1 * width) * kernelMiddleIndex - 3 )) && (j < (kernelMiddleIndex + 1) * (width > 0 ? width : -1 * width))){
+            //     RGB* targetPixel  = (RGB*)&row[(j - (width * kernelMiddleIndex)) * (sizeof(RGB))];
+            //     targetPixel->red = individualPixel->red;
+            //     targetPixel->green = individualPixel->green;
+            //     targetPixel->blue = individualPixel->blue;
+            //     printf("\nR: %d G: %d B: %d \n", individualPixel->red, individualPixel->green, individualPixel->blue);
+            //     sleep(1);
+
+            // }
            
             // Rewrite the RGB values for each pixel in row
             // Do the kernel stuff
@@ -221,6 +234,9 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         }
         // Write the gaussian row to the output file
         fwrite(row, rowSize, 1, outputBMP);
+        printf("\nkernel middle index: %d\n", kernelMiddleIndex);
+        //sleep(1);
+     
     }
     fclose(inputBMP);
     fclose(outputBMP);
