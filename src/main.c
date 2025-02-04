@@ -163,7 +163,6 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     int kernelMiddleIndex = 0;
 
     for (int i = 0; i < (height > 0 ? height : -1 * height); i++){
-        
         // These if statements calculate the memory required for the kernel in horizontal strips
         printf("\nHeight I value: %d\n", i);
         if (((height > 0 ? height : -1 * height) - i) <= kernelWidth / 2){
@@ -196,8 +195,10 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         // Save the position
         kernelPosition = ftell(inputBMP);
         // Read what we need to read 
-
-        fread(kernelRow, kernelRowSize, 1, inputBMP);
+        for (int j = 0; j < (kernelRowSize / rowSize); j++){
+            fread(kernelRow + j * rowSize, rowSize, 1, inputBMP);
+        }
+        
         // Go back to the position we were at 
         fseek(inputBMP, kernelPosition, SEEK_SET);
         
@@ -206,41 +207,68 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
             fseek(inputBMP, rowSize, SEEK_CUR);
             
         } 
-        printf("Pixels in kernel: %d", ((width > 0 ? width : -1 * width) * (kernelRowSize / rowSize)));
-        for (int j = 0; j < ((width > 0 ? width : -1 * width) * (kernelRowSize / rowSize)); j++){
-            RGB* individualPixel = (RGB *)&kernelRow[j * (sizeof(RGB))]; // Set each pixel as a pointer to the pixel in the kernel Rows
-            if (j < (width > 0 ? width : -1 * width)){
-                RGB* targetPixel  = (RGB*)&row[j * sizeof(RGB)];
-                targetPixel->red = individualPixel->red;
-                targetPixel->green = individualPixel->green;
-                targetPixel->blue = individualPixel->blue;
+        for (int j = 0; j < ((width > 0 ? width : -1 * width)); j++){
+            // Iterate through each pixel within the target row
+            printf("\n\nNEW ROW\n\n");
+            unsigned char** uncalcKernel = malloc(kernelWidth * kernelWidth);
+            for (int k = 0; k < (kernelWidth * kernelWidth); k++){
+                // Check is the location exists for each value of k
+                bool kExists = true;
+                // Horizontal check
+                if (k % kernelWidth > width - j){
+                    // Out of right horizontal bound
+                    kExists = false;
+                }
+                if (kExists && (j - (kernelWidth / 2) + (k % kernelWidth) + 1 <= 0)){
+                    // Out of the left horizontal bound
+                    kExists = false;
+                }
+                // Vertical check
+                if (kExists && (kernelWidth / 2) - (k / kernelWidth) > i){
+                    // Out of the top vertical bound
+                    kExists = false;
+
+                }
+                if (kExists && (kernelWidth / 2) - (k / kernelWidth) <= i - height){
+                    // Out of the bottom vertical bound
+                    kExists = false;
+                }
+                
+                if (!kExists){
+                    // Value does not exist, so null pointer
+                    uncalcKernel[k] = NULL;
+                } else {
+                    // Value does exist, so point to the correct row and column in kernel row
+                    uncalcKernel[k] = kernelRow + k / kernelWidth + (k % kernelWidth);
+                }
+
             }
-            
-
-            //printf("\nR: %d G: %d B: %d \n", individualPixel->red, individualPixel->green, individualPixel->blue);
-            // if ((j > ((width > 0 ? width : -1 * width) * kernelMiddleIndex - 3 )) && (j < (kernelMiddleIndex + 1) * (width > 0 ? width : -1 * width))){
-            //     RGB* targetPixel  = (RGB*)&row[(j - (width * kernelMiddleIndex)) * (sizeof(RGB))];
-            //     targetPixel->red = individualPixel->red;
-            //     targetPixel->green = individualPixel->green;
-            //     targetPixel->blue = individualPixel->blue;
-            //     printf("\nR: %d G: %d B: %d \n", individualPixel->red, individualPixel->green, individualPixel->blue);
-            //     sleep(1);
-
-            // }
-           
+            for (int k = 0; k < (kernelWidth * kernelWidth); k++){
+                RGB* eachPixel = (RGB *)&uncalcKernel[k * sizeof(RGB)];
+                printf("\nTest R: %d G: %d B: %d", eachPixel->red, eachPixel->green, eachPixel->blue);
+                
+            }
             // Rewrite the RGB values for each pixel in row
             // Do the kernel stuff
+
             
         }
+
+    
+
+        unsigned char* tempRow = kernelRow + kernelMiddleIndex * rowSize;
         // Write the gaussian row to the output file
-        fwrite(row, rowSize, 1, outputBMP);
+        fwrite(tempRow, rowSize, 1, outputBMP);
+        //fwrite(kernelRow, rowSize, 1, outputBMP);
         printf("\nkernel middle index: %d\n", kernelMiddleIndex);
-        //sleep(1);
+        //free(kernelRow);
+        
      
     }
+    free(row);
     fclose(inputBMP);
     fclose(outputBMP);
-    free(row);
+    
     printf("\nGaussian blur has been written successfully!");
 
 }
