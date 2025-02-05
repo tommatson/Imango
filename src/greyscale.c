@@ -50,7 +50,6 @@ void greyscaleConvert(const char* inputFile){
     }
     DIBheader dibHeader;
     fread(&dibHeader, sizeof(DIBheader), 1, inputBMP);
-    printf("BMP bits:%d", dibHeader.bitCount);
     // Check we are in 24 bit
     if (dibHeader.bitCount != 24){
         perror("24 bit BMP files are only supported at the moment :(");
