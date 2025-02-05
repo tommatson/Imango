@@ -45,6 +45,7 @@ typedef struct
 
 
 double approximateExponential(double squaredPart){
+    // Use the taylor series for e^x
     double exponentialSum = 1;
     double term = 1.0;
     for (int j = 1; j < 100; j++){
@@ -55,6 +56,7 @@ double approximateExponential(double squaredPart){
     } 
     return exponentialSum;
 }
+
 
 
 double calculateKernelItem(float stanDev, int i, int kernelWidth){
@@ -71,10 +73,24 @@ double calculateKernelItem(float stanDev, int i, int kernelWidth){
     
 }
 
-FILE* writeHeaders (FILE* inputFile){
 
-    
+RGB* calculatePixel(RGB* uncalcKernel[], double* kernel, int kernelWidth){
+    // uncalcKernel stores our pixel rgb values, whilst kernel stores the values we multiply the kernel with
+    double newR = 0;
+    double newG = 0;
+    double newB = 0;
+    for (int i = 0; i < (kernelWidth * kernelWidth); i++){
+        newR += uncalcKernel[i]->red * kernel[i];
+        newG += uncalcKernel[i]->green * kernel[i];
+        newB += uncalcKernel[i]->blue * kernel[i];
+    }
+    RGB* pixel  = (RGB*)malloc(sizeof(RGB));
+    pixel->red = round(newR, 0);
+    pixel->green = round(newG, 0);
+    pixel->blue = round(newB, 0);
+    return pixel;
 }
+
 
 void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     if (kernelWidth % 2 != 1){
@@ -91,15 +107,11 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         perror("Memory allocation failed");
         exit(EXIT_FAILURE);
     }
-    // Store the magnitude sum ready for normalisation
-    double kernelMagnitude = 0.0;
+    
     // Calculate the kernel with the given parameters
     for (int i = 0; i < (kernelWidth * kernelWidth); i++){
         kernel[i] = calculateKernelItem(stanDev, i, kernelWidth);
-        kernelMagnitude += kernel[i];
-        printf("\n%d::%lf", i, kernel[i]);
     }
-    printf("\nsum:%lf", kernelMagnitude);
 
     // FILE WRITING ---------------------------
 
@@ -119,7 +131,6 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     }
     DIBheader dibHeader;
     fread(&dibHeader, sizeof(DIBheader), 1, inputBMP);
-    printf("BMP bits:%d", dibHeader.bitCount);
     // Check we are in 24 bit
     if (dibHeader.bitCount != 24){
         perror("24 bit BMP files are only supported at the moment :(");
@@ -164,9 +175,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
 
     for (int i = 0; i < (height > 0 ? height : -1 * height); i++){
         // These if statements calculate the memory required for the kernel in horizontal strips
-        printf("\nHeight I value: %d\n", i);
         if (((height > 0 ? height : -1 * height) - i) <= kernelWidth / 2){
-            printf("Bottom I: %d", i);
             // In this one the kernel will now go over the image size
             // Imagine a 3x3 kernel on the final row of pixels, the bottom row of the kernel is out the image right? So this code calculates that the kernel needs to be a size of 2
             kernelRowSize = rowSize * ((kernelWidth / 2) + ((height > 0 ? height : -1 * height) - i));
@@ -175,14 +184,12 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
             kernelMiddleIndex = kernelWidth / 2;
         } else {
             if ((kernelWidth / 2) + i + 1 >= kernelWidth){
-                printf("Mid I: %d", i);
                 // Here the entire kernel can fit within the image so we continue at its full size and increment it
                 kernelRowSize = rowSize * kernelWidth;
                 kernelRow = malloc(kernelRowSize);
                 incrementKernel = true;
                 kernelMiddleIndex = kernelWidth / 2;
             } else {
-                printf("Top I: %d", i);
                 // Here the kernel is at the top of the image
                 // Imagine a 3x3 kernel with out target row being row 0 of the image, the top of the kernel is cut off so we need the row and the row below it
                 kernelRowSize = rowSize * ((kernelWidth / 2) + i + 1);
@@ -206,11 +213,11 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
             // Increment the read position
             fseek(inputBMP, rowSize, SEEK_CUR);
             
-        } 
+        }
+
         for (int j = 0; j < ((width > 0 ? width : -1 * width)); j++){
             // Iterate through each pixel within the target row
-            printf("\n\nNEW ROW\n\n");
-            unsigned char** uncalcKernel = malloc(kernelWidth * kernelWidth);
+            RGB* uncalcKernel[kernelWidth * kernelWidth];
             for (int k = 0; k < (kernelWidth * kernelWidth); k++){
                 // Check is the location exists for each value of k
                 bool kExists = true;
@@ -229,41 +236,36 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
                     kExists = false;
 
                 }
-                if (kExists && (kernelWidth / 2) - (k / kernelWidth) <= i - height){
+                if (kExists && (kernelWidth / 2) - (k / kernelWidth) <= i - (height > 0 ? height : -1 * height)){
                     // Out of the bottom vertical bound
                     kExists = false;
                 }
-                
+                uncalcKernel[k] = (RGB *)malloc(sizeof(RGB));
                 if (!kExists){
-                    // Value does not exist, so null pointer
-                    uncalcKernel[k] = NULL;
+                    // Value does not exist, so set all values to zero
+                    uncalcKernel[k]->red = 0;
+                    uncalcKernel[k]->green = 0;
+                    uncalcKernel[k]->blue = 0; 
                 } else {
-                    // Value does exist, so point to the correct row and column in kernel row
-                    uncalcKernel[k] = kernelRow + k / kernelWidth + (k % kernelWidth);
+                    // Value does exist, so point to the correct row and column in kernel row to get the pixels
+                    RGB* tempPixel = kernelRow + ((kernelMiddleIndex + (k / kernelWidth) - (kernelWidth / 2)) * rowSize) + (((k % kernelWidth) - (kernelWidth / 2) + j)* sizeof(RGB));
+                    uncalcKernel[k]->red = tempPixel->red;
+                    uncalcKernel[k]->green = tempPixel->green;
+                    uncalcKernel[k]->blue = tempPixel->blue; 
                 }
-
             }
+            // Calculate the pixel values with the kernel and set it in row
+            RGB * calculatedPixel = calculatePixel(uncalcKernel, kernel, kernelWidth);
+            row[j * 3] = calculatedPixel->red;
+            row[(j * 3) + 1] = calculatedPixel->green;
+            row[(j * 3) + 2] = calculatedPixel->blue;
+            // Free the data structure
             for (int k = 0; k < (kernelWidth * kernelWidth); k++){
-                RGB* eachPixel = (RGB *)&uncalcKernel[k * sizeof(RGB)];
-                printf("\nTest R: %d G: %d B: %d", eachPixel->red, eachPixel->green, eachPixel->blue);
-                
+                free(uncalcKernel[k]);   
             }
-            // Rewrite the RGB values for each pixel in row
-            // Do the kernel stuff
-
-            
         }
-
-    
-
-        unsigned char* tempRow = kernelRow + kernelMiddleIndex * rowSize;
         // Write the gaussian row to the output file
-        fwrite(tempRow, rowSize, 1, outputBMP);
-        //fwrite(kernelRow, rowSize, 1, outputBMP);
-        printf("\nkernel middle index: %d\n", kernelMiddleIndex);
-        //free(kernelRow);
-        
-     
+        fwrite(row, rowSize, 1, outputBMP);
     }
     free(row);
     fclose(inputBMP);
