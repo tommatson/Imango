@@ -1,0 +1,1 @@
+void sobelConvert(const char* inputFile);

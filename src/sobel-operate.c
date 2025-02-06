@@ -5,11 +5,6 @@
 #include "mango-maths.h"
 
 
-// This is the code used to do gaussian blur, this code can be improved as I have noticed artifacts appear for larger kernels and smaller standard deviations
-// I have some idea why these errors are occuring but for now it functions
-
-#define pi 3.1415926535897932
-
 typedef struct {
     unsigned short type;
     unsigned int size;
@@ -40,37 +35,7 @@ typedef struct
 } RGB;
 
 
-double approximateExponential(double squaredPart){
-    // Use the taylor series for e^x
-    double exponentialSum = 1;
-    double term = 1.0;
-    for (int j = 1; j < 100; j++){
-        term *= squaredPart / j;
-        // Stop if its getting really small (we don't need that amount of accuracy)
-        if((term > 0 ? term : (-1 * term)) < 1e-10) break;
-        exponentialSum += term;
-    } 
-    return exponentialSum;
-}
-
-
-
-double calculateKernelItem(float stanDev, int i, int kernelWidth){
-    // Calculate x value within the kernel
-    int x = (kernelWidth / 2) - (i - (kernelWidth * (i / kernelWidth)));
-    // Calculate y value within the kernel
-    int y = (kernelWidth / 2) - (i / kernelWidth);
-    // The power of the exponential
-    double squaredPart = -((x * x + y * y) / (2 * stanDev * stanDev));
-    // Estimating the exponential using the taylor series
-    double exponentialPart = approximateExponential(squaredPart);
-    // Finally, calculate the gaussian value
-    return round(((1/(2 * pi * stanDev * stanDev)) * exponentialPart), 3);
-    
-}
-
-
-RGB* calculatePixel(RGB* uncalcKernel[], double* kernel, int kernelWidth){
+RGB* calculateSobelPixel(RGB* uncalcKernel[], int kernel[], int kernelWidth){
     // uncalcKernel stores our pixel rgb values, whilst kernel stores the values we multiply the kernel with
     double newR = 0;
     double newG = 0;
@@ -87,27 +52,10 @@ RGB* calculatePixel(RGB* uncalcKernel[], double* kernel, int kernelWidth){
     return pixel;
 }
 
+void sobelConvert(const char* inputFile){
 
-void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
-    if (kernelWidth % 2 != 1){
-        perror("Kernel width must be an odd integer");
-        exit(EXIT_FAILURE);
-    }
-    // For canny edge detection image should first be converted to greyscale
-    // the stanDev parameter stores the standard deviation for the gaussian blur function, I recommend using 1
-    unsigned int kernelSpace = sizeof(double) * (kernelWidth * kernelWidth);
-    // malloc the kernel
-    double* kernel = (double*)malloc(kernelSpace);
-
-    if (!kernel){
-        perror("Memory allocation failed");
-        exit(EXIT_FAILURE);
-    }
-    
-    // Calculate the kernel with the given parameters
-    for (int i = 0; i < (kernelWidth * kernelWidth); i++){
-        kernel[i] = calculateKernelItem(stanDev, i, kernelWidth);
-    }
+    int xKernel[9] = {1, 0, -1, 2, 0, -2, 1, 0, -1};
+    int yKernel[9] = {1, 2, 1, 0, 0, 0, -1, -2, -1};
 
     // FILE WRITING ---------------------------
 
@@ -133,33 +81,48 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         fclose(inputBMP);
         exit(EXIT_FAILURE);
     }
-    // Create the output file
-    char* outputFileName = (char*)malloc(strlen(inputFile) + 10); // size of inputfile + "_gaussian" + \0
-    strncpy(outputFileName, inputFile, (strlen(inputFile) - 4));
-    strcat(outputFileName, "_gaussian.bmp\0");
+    // Create the x output file
+    char* xOutputFileName = (char*)malloc(strlen(inputFile) + 9); // size of inputfile + "_sobel_x" + \0
+    strncpy(xOutputFileName, inputFile, (strlen(inputFile) - 4));
+    strcat(xOutputFileName, "_sobel_x.bmp\0");
     
-    FILE* outputBMP = fopen(outputFileName, "wb");
-    fwrite(&bmpHeader, sizeof(BMPheader), 1, outputBMP);
-    fwrite(&dibHeader, sizeof(DIBheader), 1, outputBMP);
+    FILE* xOutputBMP = fopen(xOutputFileName, "wb");
+    fwrite(&bmpHeader, sizeof(BMPheader), 1, xOutputBMP);
+    fwrite(&dibHeader, sizeof(DIBheader), 1, xOutputBMP);
+
+    // Create the y output file
+    char* yOutputFileName = (char*)malloc(strlen(inputFile) + 9); // size of inputfile + "_sobel_x" + \0
+    strncpy(yOutputFileName, inputFile, (strlen(inputFile) - 4));
+    strcat(yOutputFileName, "_sobel_y.bmp\0");
+    
+    FILE* yOutputBMP = fopen(yOutputFileName, "wb");
+    fwrite(&bmpHeader, sizeof(BMPheader), 1, yOutputBMP);
+    fwrite(&dibHeader, sizeof(DIBheader), 1, yOutputBMP);
+
 
     // Move the file pointer to the correct location to begin reading and writing
     fseek(inputBMP, bmpHeader.offset, SEEK_SET);
-    fseek(outputBMP, bmpHeader.offset, SEEK_SET);
+    fseek(xOutputBMP, bmpHeader.offset, SEEK_SET);
+    fseek(yOutputBMP, bmpHeader.offset, SEEK_SET);
     
     int height = dibHeader.height;
     int width = dibHeader.width;
 
     int rowSize = (((width * 3) + 3) & ~3);// Times by 3 because 3 bytes per pixel, add on 3 to account for padding (padding can be 0-3) then & with !3 to round to a multiple of 4
-    unsigned char* row = malloc(rowSize); // Used top hold the row read from the BMP file
+    unsigned char* xRow = malloc(rowSize); // Used top hold the row read from the BMP file
+    unsigned char* yRow = malloc(rowSize);
 
     // TRANSLATED PIXEL WRITING ------------------------
     
-    if(!row){
+    if(!xRow || !yRow){
         perror("Memory allocation failed");
         fclose(inputBMP);
-        fclose(outputBMP);
+        fclose(xOutputBMP);
+        fclose(yOutputBMP);
         exit(EXIT_FAILURE);
     }
+
+    int kernelWidth = 3;
 
     unsigned char* kernelRow;
     int kernelRowSize;
@@ -251,24 +214,35 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
                 }
             }
             // Calculate the pixel values with the kernel and set it in row
-            RGB * calculatedPixel = calculatePixel(uncalcKernel, kernel, kernelWidth);
-            row[j * 3] = calculatedPixel->red;
-            row[(j * 3) + 1] = calculatedPixel->green;
-            row[(j * 3) + 2] = calculatedPixel->blue;
+            RGB* calculatedXPixel = calculateSobelPixel(uncalcKernel, xKernel, kernelWidth);
+            RGB* calculatedYPixel = calculateSobelPixel(uncalcKernel, yKernel, kernelWidth);
+
+            xRow[j * 3] = calculatedXPixel->red;
+            xRow[(j * 3) + 1] = calculatedXPixel->green;
+            xRow[(j * 3) + 2] = calculatedXPixel->blue;
+
+            yRow[j * 3] = calculatedYPixel->red;
+            yRow[(j * 3) + 1] = calculatedYPixel->green;
+            yRow[(j * 3) + 2] = calculatedYPixel->blue;
+
             // Free the data structure
             for (int k = 0; k < (kernelWidth * kernelWidth); k++){
                 free(uncalcKernel[k]);   
             }
         }
-        // Write the gaussian row to the output file
-        fwrite(row, rowSize, 1, outputBMP);
+        // Write the sobel rows to the output files
+        fwrite(xRow, rowSize, 1, xOutputBMP);
+        fwrite(yRow, rowSize, 1, yOutputBMP);
     }
-    free(row);
-    free(kernel);
+    free(xRow);
+    free(yRow);
     fclose(inputBMP);
-    fclose(outputBMP);
+    fclose(xOutputBMP);
+    fclose(yOutputBMP);
     
-    printf("\nGaussian blur has been written successfully!");
+    printf("\nSobel operator has been written successfully!");
 
 }
+
+
 

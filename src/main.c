@@ -5,9 +5,13 @@
 #include "greyscale.h"
 #include "mango-maths.h"
 #include "gaussian.h"
+#include "sobel-operate.h"
+
 // Kill me 
 extern unsigned int sleep(unsigned int seconds);
 // Kill me no more
+
+
 
 
 
@@ -19,7 +23,8 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     }
     //greyscaleConvert(argv[1]);
-    gaussianConvert(argv[1], atoi(argv[2]), atof(argv[3]));
+    //gaussianConvert(argv[1], atoi(argv[2]), atof(argv[3]));
+    sobelConvert(argv[1]);
     
     // //printf("%f", power(atoi(argv[1]), atof(argv[2])));
     // printf("\n%d", atof(argv[1]));
