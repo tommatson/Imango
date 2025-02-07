@@ -31,3 +31,24 @@ double round(double number, int places){
     // Long ah return statement
     return (((number * power(10.0, places) - truncate(number, places) * power(10.0, places))) > 0.5 ? ((int) (number * power(10.0, places) + 1) / power(10.0, places)) : truncate(number, places) );
 }
+
+double squareRoot(double number, float accuracy)
+{
+    // Square root using newtons method
+    // Credit for the solution goes to geeksforgeeks
+    double x = number;
+    double root;
+ 
+    int count = 0;
+    
+    while (1) { 
+        count++;
+        root = 0.5 * (x + (number  / x));
+        if ((root - x > 0 ? root - x : x - root) < accuracy){
+            break;
+        }
+        x = root;
+    }
+ 
+    return root;
+}

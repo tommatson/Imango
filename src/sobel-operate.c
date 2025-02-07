@@ -81,44 +81,44 @@ void sobelConvert(const char* inputFile){
         fclose(inputBMP);
         exit(EXIT_FAILURE);
     }
-    // Create the x output file
-    char* xOutputFileName = (char*)malloc(strlen(inputFile) + 9); // size of inputfile + "_sobel_x" + \0
-    strncpy(xOutputFileName, inputFile, (strlen(inputFile) - 4));
-    strcat(xOutputFileName, "_sobel_x.bmp\0");
+    // Create the magnitude output file
+    char* mOutputFileName = (char*)malloc(strlen(inputFile) + 11); // size of inputfile + "_magnitude" + \0
+    strncpy(mOutputFileName, inputFile, (strlen(inputFile) - 4));
+    strcat(mOutputFileName, "_magnitude.bmp\0");
     
-    FILE* xOutputBMP = fopen(xOutputFileName, "wb");
-    fwrite(&bmpHeader, sizeof(BMPheader), 1, xOutputBMP);
-    fwrite(&dibHeader, sizeof(DIBheader), 1, xOutputBMP);
+    FILE* mOutputBMP = fopen(mOutputFileName, "wb");
+    fwrite(&bmpHeader, sizeof(BMPheader), 1, mOutputBMP);
+    fwrite(&dibHeader, sizeof(DIBheader), 1, mOutputBMP);
 
-    // Create the y output file
-    char* yOutputFileName = (char*)malloc(strlen(inputFile) + 9); // size of inputfile + "_sobel_x" + \0
-    strncpy(yOutputFileName, inputFile, (strlen(inputFile) - 4));
-    strcat(yOutputFileName, "_sobel_y.bmp\0");
+    // Create the angle file
+    char* aOutputFileName = (char*)malloc(strlen(inputFile) + 7); // size of inputfile + "_angle" + \0
+    strncpy(aOutputFileName, inputFile, (strlen(inputFile) - 4));
+    strcat(aOutputFileName, "_angle.bmp\0");
     
-    FILE* yOutputBMP = fopen(yOutputFileName, "wb");
-    fwrite(&bmpHeader, sizeof(BMPheader), 1, yOutputBMP);
-    fwrite(&dibHeader, sizeof(DIBheader), 1, yOutputBMP);
+    FILE* aOutputBMP = fopen(aOutputFileName, "wb");
+    fwrite(&bmpHeader, sizeof(BMPheader), 1, aOutputBMP);
+    fwrite(&dibHeader, sizeof(DIBheader), 1, aOutputBMP);
 
 
     // Move the file pointer to the correct location to begin reading and writing
     fseek(inputBMP, bmpHeader.offset, SEEK_SET);
-    fseek(xOutputBMP, bmpHeader.offset, SEEK_SET);
-    fseek(yOutputBMP, bmpHeader.offset, SEEK_SET);
+    fseek(mOutputBMP, bmpHeader.offset, SEEK_SET);
+    fseek(aOutputBMP, bmpHeader.offset, SEEK_SET);
     
     int height = dibHeader.height;
     int width = dibHeader.width;
 
     int rowSize = (((width * 3) + 3) & ~3);// Times by 3 because 3 bytes per pixel, add on 3 to account for padding (padding can be 0-3) then & with !3 to round to a multiple of 4
-    unsigned char* xRow = malloc(rowSize); // Used top hold the row read from the BMP file
-    unsigned char* yRow = malloc(rowSize);
+    unsigned char* mRow = malloc(rowSize); // Used top hold the row read from the BMP file
+    unsigned char* aRow = malloc(rowSize);
 
     // TRANSLATED PIXEL WRITING ------------------------
     
-    if(!xRow || !yRow){
+    if(!mRow || !aRow){
         perror("Memory allocation failed");
         fclose(inputBMP);
-        fclose(xOutputBMP);
-        fclose(yOutputBMP);
+        fclose(mOutputBMP);
+        fclose(aOutputBMP);
         exit(EXIT_FAILURE);
     }
 
@@ -217,13 +217,13 @@ void sobelConvert(const char* inputFile){
             RGB* calculatedXPixel = calculateSobelPixel(uncalcKernel, xKernel, kernelWidth);
             RGB* calculatedYPixel = calculateSobelPixel(uncalcKernel, yKernel, kernelWidth);
 
-            xRow[j * 3] = calculatedXPixel->red;
-            xRow[(j * 3) + 1] = calculatedXPixel->green;
-            xRow[(j * 3) + 2] = calculatedXPixel->blue;
+            mRow[j * 3] = calculatedXPixel->red * calculatedXPixel->red + calculatedYPixel->red * calculatedYPixel->red;
+            mRow[(j * 3) + 1] = calculatedXPixel->green;
+            mRow[(j * 3) + 2] = calculatedXPixel->blue;
 
-            yRow[j * 3] = calculatedYPixel->red;
-            yRow[(j * 3) + 1] = calculatedYPixel->green;
-            yRow[(j * 3) + 2] = calculatedYPixel->blue;
+            aRow[j * 3] = calculatedYPixel->red;
+            aRow[(j * 3) + 1] = calculatedYPixel->green;
+            aRow[(j * 3) + 2] = calculatedYPixel->blue;
 
             // Free the data structure
             for (int k = 0; k < (kernelWidth * kernelWidth); k++){
@@ -231,14 +231,14 @@ void sobelConvert(const char* inputFile){
             }
         }
         // Write the sobel rows to the output files
-        fwrite(xRow, rowSize, 1, xOutputBMP);
-        fwrite(yRow, rowSize, 1, yOutputBMP);
+        fwrite(mRow, rowSize, 1, mOutputBMP);
+        fwrite(aRow, rowSize, 1, aOutputBMP);
     }
-    free(xRow);
-    free(yRow);
+    free(mRow);
+    free(aRow);
     fclose(inputBMP);
-    fclose(xOutputBMP);
-    fclose(yOutputBMP);
+    fclose(mOutputBMP);
+    fclose(aOutputBMP);
     
     printf("\nSobel operator has been written successfully!");
 
