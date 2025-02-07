@@ -217,9 +217,9 @@ void sobelConvert(const char* inputFile){
             RGB* calculatedXPixel = calculateSobelPixel(uncalcKernel, xKernel, kernelWidth);
             RGB* calculatedYPixel = calculateSobelPixel(uncalcKernel, yKernel, kernelWidth);
 
-            mRow[j * 3] = calculatedXPixel->red * calculatedXPixel->red + calculatedYPixel->red * calculatedYPixel->red;
-            mRow[(j * 3) + 1] = calculatedXPixel->green;
-            mRow[(j * 3) + 2] = calculatedXPixel->blue;
+            mRow[j * 3] = squareRoot(calculatedXPixel->red * calculatedXPixel->red + calculatedYPixel->red * calculatedYPixel->red,  1);
+            mRow[(j * 3) + 1] = squareRoot(calculatedXPixel->green * calculatedXPixel->green + calculatedYPixel->green * calculatedYPixel->green,  1);
+            mRow[(j * 3) + 2] = squareRoot(calculatedXPixel->blue * calculatedXPixel->blue + calculatedYPixel->blue * calculatedYPixel->blue,  1);
 
             aRow[j * 3] = calculatedYPixel->red;
             aRow[(j * 3) + 1] = calculatedYPixel->green;

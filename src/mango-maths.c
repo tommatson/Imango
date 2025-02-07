@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 double power(double base, int exponent){
     if (exponent < 0){
         // Not implemented yet
@@ -52,3 +54,24 @@ double squareRoot(double number, float accuracy)
  
     return root;
 }
+
+double arctan(double x) {
+    if (x > 1) {
+        return 1.57079632679 - arctan(1 / x);  // pi / 2 - arctan(1/x) transformation
+    } else if (x < -1) {
+        return -1.57079632679 - arctan(1 / x);
+    }
+
+    double sum = x;
+    double term = x;
+    
+    for (int j = 3; j < 100; j += 2) {
+        term *= (x * x);
+        sum += (j % 4 == 1) ? term / j : -term / j;  // Alternating signs
+    }
+
+    return sum;
+}
+
+
+

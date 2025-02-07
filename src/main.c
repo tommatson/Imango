@@ -253,7 +253,8 @@ int main(int argc, char* argv[]){
     }
     //greyscaleConvert(argv[1]);
     //gaussianConvert(argv[1], atoi(argv[2]), atof(argv[3]));
-    printf("%f", round((squareRoot(atof(argv[1]), atof(argv[2]))), 0));
+    printf("%f", (arctan(atof(argv[1]))));
+    //printf("%f", round((squareRoot(atof(argv[1]), atof(argv[2]))), 0));
     //sobelConvert(argv[1]);
     
     // //printf("%f", power(atoi(argv[1]), atof(argv[2])));
