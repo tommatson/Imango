@@ -3,3 +3,4 @@ double truncate(double number, int places);
 double round(double number, int places);
 double squareRoot(double number, float accuracy);
 double arctan(double number);
+float Q_rsqrt( float number );

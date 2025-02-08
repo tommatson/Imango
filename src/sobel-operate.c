@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "mango-maths.h"
 
+#define pi 3.1415926535897932
 
 typedef struct {
     unsigned short type;
@@ -34,6 +35,20 @@ typedef struct
     unsigned char blue;
 } RGB;
 
+int pixelFinal(float pixel){
+    pixel = abs(pixel);
+    if (pixel > 255){
+        pixel = 255;
+    }
+    return round(pixel, 0);
+
+}
+
+int angleConverter(float pixel){
+    // if (pixel)
+
+}
+
 
 RGB* calculateSobelPixel(RGB* uncalcKernel[], int kernel[], int kernelWidth){
     // uncalcKernel stores our pixel rgb values, whilst kernel stores the values we multiply the kernel with
@@ -46,9 +61,9 @@ RGB* calculateSobelPixel(RGB* uncalcKernel[], int kernel[], int kernelWidth){
         newB += uncalcKernel[i]->blue * kernel[i];
     }
     RGB* pixel  = (RGB*)malloc(sizeof(RGB));
-    pixel->red = round(newR, 0);
-    pixel->green = round(newG, 0);
-    pixel->blue = round(newB, 0);
+    pixel->red = (round(abs(newR), 0) > 255 ? 255 : round(abs(newR), 0));
+    pixel->green = (round(abs(newG), 0) > 255 ? 255 : round(abs(newG), 0));
+    pixel->blue = (round(abs(newB), 0) > 255 ? 255 : round(abs(newB), 0));
     return pixel;
 }
 
@@ -217,13 +232,27 @@ void sobelConvert(const char* inputFile){
             RGB* calculatedXPixel = calculateSobelPixel(uncalcKernel, xKernel, kernelWidth);
             RGB* calculatedYPixel = calculateSobelPixel(uncalcKernel, yKernel, kernelWidth);
 
-            mRow[j * 3] = squareRoot(calculatedXPixel->red * calculatedXPixel->red + calculatedYPixel->red * calculatedYPixel->red,  1);
-            mRow[(j * 3) + 1] = squareRoot(calculatedXPixel->green * calculatedXPixel->green + calculatedYPixel->green * calculatedYPixel->green,  1);
-            mRow[(j * 3) + 2] = squareRoot(calculatedXPixel->blue * calculatedXPixel->blue + calculatedYPixel->blue * calculatedYPixel->blue,  1);
+            // mRow[j * 3] = squareRoot(calculatedXPixel->red * calculatedXPixel->red + calculatedYPixel->red * calculatedYPixel->red,  5);
+            // mRow[(j * 3) + 1] = squareRoot(calculatedXPixel->green * calculatedXPixel->green + calculatedYPixel->green * calculatedYPixel->green,  5);
+            // mRow[(j * 3) + 2] = squareRoot(calculatedXPixel->blue * calculatedXPixel->blue + calculatedYPixel->blue * calculatedYPixel->blue,  5);
+
+            mRow[j * 3] = pixelFinal(Q_rsqrt(1.0 / (calculatedXPixel->red * calculatedXPixel->red + calculatedYPixel->red * calculatedYPixel->red)));
+            mRow[(j * 3) + 1] = pixelFinal(Q_rsqrt(1.0 / (calculatedXPixel->green * calculatedXPixel->green + calculatedYPixel->green * calculatedYPixel->green)));
+            mRow[(j * 3) + 2] = pixelFinal(Q_rsqrt(1.0 / (calculatedXPixel->blue * calculatedXPixel->blue + calculatedYPixel->blue * calculatedYPixel->blue)));
+
+
+            aRow[j * 3] = angleConverter(arctan(calculatedYPixel->red / calculatedXPixel->red));
+            aRow[(j * 3) + 1] = angleConverter(arctan(calculatedYPixel->green / calculatedXPixel->green));
+            aRow[(j * 3) + 2] = angleConverter(arctan(calculatedYPixel->blue / calculatedXPixel->blue));
+
+            // mRow[j * 3] = calculatedXPixel->red;
+            // mRow[(j * 3) + 1] = calculatedXPixel->green;
+            // mRow[(j * 3) + 2] = calculatedXPixel->blue;
 
             aRow[j * 3] = calculatedYPixel->red;
             aRow[(j * 3) + 1] = calculatedYPixel->green;
             aRow[(j * 3) + 2] = calculatedYPixel->blue;
+
 
             // Free the data structure
             for (int k = 0; k < (kernelWidth * kernelWidth); k++){
