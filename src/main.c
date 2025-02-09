@@ -255,7 +255,7 @@ int main(int argc, char* argv[]){
     //gaussianConvert(argv[1], atoi(argv[2]), atof(argv[3]));
     //printf("%f", (arctan(atof(argv[1]))));
     //printf("%f", round((squareRoot(atof(argv[1]), atof(argv[2]))), 0));
-    //sobelConvert(argv[1]);
+    sobelConvert(argv[1]);
     //printf("%f", Q_rsqrt(1 / atof(argv[1])));
     
     // //printf("%f", power(atoi(argv[1]), atof(argv[2])));
@@ -263,9 +263,9 @@ int main(int argc, char* argv[]){
     // double x = 5.0;
     // printf("\n%lf", approximateExponential(atof(argv[1])));
     // //greyscaleConvert(argv[1]);
-    printf("\n%lf", round(atof(argv[1]), atoi(argv[2])));
-    printf("\n%lf", truncate(atof(argv[1]), atoi(argv[2])));
-    printf("\n%lf", power(atof(argv[1]), atoi(argv[2])));
+    // printf("\n%lf", round(atof(argv[1]), atoi(argv[2])));
+    // printf("\n%lf", truncate(atof(argv[1]), atoi(argv[2])));
+    // printf("\n%lf", power(atof(argv[1]), atoi(argv[2])));
     // printf("\n%lf", (atof(argv[1]) * power(10.0, 3) - truncate(atof(argv[1]), 3) * power(10.0, 3)));
     // printf("\n%lf", (truncate(atof(argv[1]), 3) * power(10.0, 3)));
     return EXIT_SUCCESS;
