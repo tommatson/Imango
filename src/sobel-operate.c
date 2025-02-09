@@ -6,6 +6,12 @@
 
 #define pi 3.1415926535897932
 
+
+// Kill me 
+extern unsigned int sleep(unsigned int seconds);
+// Kill me no more
+
+
 typedef struct {
     unsigned short type;
     unsigned int size;
@@ -44,8 +50,23 @@ int pixelFinal(float pixel){
 
 }
 
-int angleConverter(float pixel){
-    // if (pixel)
+int angleConverter(float x, float y){
+    // Here we map the RGB value to 1 / 4 values, the idea is that for a 3x3 kernel the middle pixel can then be placed in a diagonal, horizontal or vertical and 4 positions make this happen
+    // e.g 50 10 54 
+    //     70 43 12
+    //     63 42 72
+    // so for the given pixel of 43, you can either have [50, 43, 72], [10, 43, 42], [54, 43, 63], [21, 43, 70] (order does not matter)
+    float angle = arctan(y / x);
+    if( x < 0 ) {
+        angle += pi;
+    } else if (x > 0 && y < 0) {
+        angle = 2 * pi - angle;
+    }
+    printf("\nAngle: %f, X: %f, Y: %f", angle, x, y);
+    sleep(1);
+    return (angle / (2 * pi)) * 255;
+
+    
 
 }
 
@@ -241,9 +262,9 @@ void sobelConvert(const char* inputFile){
             mRow[(j * 3) + 2] = pixelFinal(Q_rsqrt(1.0 / (calculatedXPixel->blue * calculatedXPixel->blue + calculatedYPixel->blue * calculatedYPixel->blue)));
 
 
-            aRow[j * 3] = angleConverter(arctan(calculatedYPixel->red / calculatedXPixel->red));
-            aRow[(j * 3) + 1] = angleConverter(arctan(calculatedYPixel->green / calculatedXPixel->green));
-            aRow[(j * 3) + 2] = angleConverter(arctan(calculatedYPixel->blue / calculatedXPixel->blue));
+            aRow[j * 3] = angleConverter(calculatedYPixel->red, calculatedXPixel->red);
+            aRow[(j * 3) + 1] = angleConverter(calculatedYPixel->green, calculatedXPixel->green);
+            aRow[(j * 3) + 2] = angleConverter(calculatedYPixel->blue, calculatedXPixel->blue);
 
             // mRow[j * 3] = calculatedXPixel->red;
             // mRow[(j * 3) + 1] = calculatedXPixel->green;

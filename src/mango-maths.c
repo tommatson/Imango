@@ -31,7 +31,9 @@ double truncate(double number, int places){
 
 double round(double number, int places){
     // Long ah return statement
-    return (((number * power(10.0, places) - truncate(number, places) * power(10.0, places))) > 0.5 ? ((int) (number * power(10.0, places) + 1) / power(10.0, places)) : truncate(number, places) );
+    if (number > 0) return (((number * power(10.0, places) - truncate(number, places) * power(10.0, places))) > 0.5 ? ((int) (number * power(10.0, places) + 1) / power(10.0, places)) : truncate(number, places));
+    else if (number == 0) return 0.0;
+    else if (number < 0) return (((-1 * number * power(10.0, places) + truncate(number, places) * power(10.0, places))) > 0.5 ? ((int) (number * power(10.0, places) - 1) / power(10.0, places)) : truncate(number, places));
 }
 
 double squareRoot(double number, float accuracy)
