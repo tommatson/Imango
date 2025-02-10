@@ -62,6 +62,7 @@ int angleConverter(float x, float y){
     } else if (x > 0 && y < 0) {
         angle = 2 * pi - angle;
     }
+    printf("Angle: %d", pixelFinal((angle / (2 * pi)) * 255));
     return pixelFinal((angle / (2 * pi)) * 255);
 
     
@@ -292,6 +293,8 @@ void sobelConvert(const char* inputFile){
         // Write the sobel rows to the output files
         fwrite(mRow, rowSize, 1, mOutputBMP);
         fwrite(aRow, rowSize, 1, aOutputBMP);
+        // Free the kernel
+        free(kernelRow);
     }
     free(mRow);
     free(aRow);

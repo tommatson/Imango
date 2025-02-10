@@ -262,6 +262,8 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
         }
         // Write the gaussian row to the output file
         fwrite(row, rowSize, 1, outputBMP);
+        // Free kernel row
+        free(kernelRow);
     }
     free(row);
     free(kernel);
