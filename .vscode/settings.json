@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "string.h": "c",
-        "sobel.C": "cpp"
+        "sobel.C": "cpp",
+        "mango-maths.h": "c"
     }
 }
