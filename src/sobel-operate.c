@@ -122,6 +122,7 @@ void sobelConvert(const char* inputFile){
     strcat(mOutputFileName, "_magnitude.bmp\0");
     
     FILE* mOutputBMP = fopen(mOutputFileName, "wb");
+    free(mOutputFileName);
     fwrite(&bmpHeader, sizeof(BMPheader), 1, mOutputBMP);
     fwrite(&dibHeader, sizeof(DIBheader), 1, mOutputBMP);
 
@@ -131,9 +132,9 @@ void sobelConvert(const char* inputFile){
     strcat(aOutputFileName, "_angle.bmp\0");
     
     FILE* aOutputBMP = fopen(aOutputFileName, "wb");
+    free(aOutputFileName);
     fwrite(&bmpHeader, sizeof(BMPheader), 1, aOutputBMP);
     fwrite(&dibHeader, sizeof(DIBheader), 1, aOutputBMP);
-
 
     // Move the file pointer to the correct location to begin reading and writing
     fseek(inputBMP, bmpHeader.offset, SEEK_SET);

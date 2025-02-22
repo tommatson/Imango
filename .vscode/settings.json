@@ -2,6 +2,7 @@
     "files.associations": {
         "string.h": "c",
         "sobel.C": "cpp",
-        "mango-maths.h": "c"
+        "mango-maths.h": "c",
+        "sobel-operate.h": "c"
     }
 }
