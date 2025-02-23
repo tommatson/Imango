@@ -33,7 +33,7 @@ typedef struct
 } RGB;
 
 
-void greyscaleConvert(const char* inputFile){
+char* greyscaleConvert(const char* inputFile){
     FILE* inputBMP = fopen(inputFile, "rb");
     if (!inputBMP){
         perror("Error opening file, are you sure it exists?");
@@ -81,7 +81,6 @@ void greyscaleConvert(const char* inputFile){
         fclose(outputBMP);
         exit(EXIT_FAILURE);
     }
-    printf("Pixels in kernel: %d", ((width > 0 ? width : -1 * width)));
     for (int i = 0; i < (height > 0 ? height : -1 * height); i++){
       
         fread(row, rowSize, 1, inputBMP);
@@ -101,6 +100,7 @@ void greyscaleConvert(const char* inputFile){
     fclose(outputBMP);
     free(row);
     printf("\nGreyscale has been written successfully!");
+    return outputFileName;
 }
 
 

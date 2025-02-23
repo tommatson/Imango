@@ -88,7 +88,7 @@ RGB* calculatePixel(RGB* uncalcKernel[], double* kernel, int kernelWidth){
 }
 
 
-void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
+char* gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     if (kernelWidth % 2 != 1){
         perror("Kernel width must be an odd integer");
         exit(EXIT_FAILURE);
@@ -271,6 +271,7 @@ void gaussianConvert(const char* inputFile, int kernelWidth, float stanDev){
     fclose(outputBMP);
     
     printf("\nGaussian blur has been written successfully!");
+    return outputFileName;
 
 }
 

@@ -8,23 +8,45 @@
 #include "sobel-operate.h"
 #include "suppression.h"
 #include "hysteresis.h"
-#include "canny.h"
-
-// Kill me 
-extern unsigned int sleep(unsigned int seconds);
-// Kill me no more
 
 
 
 
+char* applyCanny(const char* inputFile){
+    char* greyscaleName = greyscaleConvert(inputFile);
+    // By default use 3 for kernel width and 1 for standev, if the user wants to change this then they can not use the applyCanny function and instead apply each step manually
+    char* gaussianName = gaussianConvert(greyscaleName, 3, 1);
+    remove(greyscaleName);
+    
+    sobelConvert(gaussianName);
+    remove(gaussianName);
+    // The sobel one is weird as it produces 2 files
+    // Create the name for the magnitude file
+    char* mOutputFileName = (char*)malloc(strlen(gaussianName) + 11); // size of inputfile + "_magnitude" + \0
+    strncpy(mOutputFileName, gaussianName, (strlen(gaussianName) - 4));
+    strcat(mOutputFileName, "_magnitude.bmp\0");
 
-int main(int argc, char* argv[]){
-    setbuf(stdout, NULL);
-    if (argc != 4){
-        fprintf(stderr, "Usage: %s <input .bmp file> <int kernel width> <standard deviation>", argv[0]);
-        return EXIT_FAILURE;
-    }
-    // greyscaleConvert(argv[1]);
+    // Create the name for the angle file
+    char* aOutputFileName = (char*)malloc(strlen(gaussianName) + 7); // size of inputfile + "_angle" + \0
+    strncpy(aOutputFileName, gaussianName, (strlen(gaussianName) - 4));
+    strcat(aOutputFileName, "_angle.bmp\0");
+
+    char* suppressionName  = localMaximumSuppressionConvert(mOutputFileName, aOutputFileName);
+    remove(mOutputFileName);
+    remove(aOutputFileName);
+    free(mOutputFileName);
+    free(aOutputFileName);
+    char* hysteresisName = hysteresisThresholding(suppressionName);
+    remove(suppressionName);
+    
+    // Create the name for the output file
+  
+    char* outputFileName = (char*)malloc(strlen(inputFile) + 7); // size of inputfile + "_canny" + \0
+    strncpy(outputFileName, inputFile, (strlen(inputFile) - 4));
+    strcat(outputFileName, "_canny.bmp\0");
+    rename(hysteresisName, outputFileName);
+
+    return outputFileName;
 
     // char* outputFileName = (char*)malloc(strlen(argv[1]) + 11); // size of inputfile + "greyscale" + \0
     // strncpy(outputFileName, argv[1], (strlen(argv[1]) - 4));
@@ -53,7 +75,6 @@ int main(int argc, char* argv[]){
     //sobelConvert(argv[1]);
     //localMaximumSuppressionConvert(argv[1], argv[2]);
     //hysteresisThresholding(argv[1]);
-    applyCanny(argv[1]);
     //printf("%f", Q_rsqrt(1 / atof(argv[1])));
     
     // //printf("%f", power(atoi(argv[1]), atof(argv[2])));
@@ -66,6 +87,5 @@ int main(int argc, char* argv[]){
     // printf("\n%lf", power(atof(argv[1]), atoi(argv[2])));
     // printf("\n%lf", (atof(argv[1]) * power(10.0, 3) - truncate(atof(argv[1]), 3) * power(10.0, 3)));
     // printf("\n%lf", (truncate(atof(argv[1]), 3) * power(10.0, 3)));
-    return EXIT_SUCCESS;
-
 }
+

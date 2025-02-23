@@ -1,0 +1,1 @@
+char* applyCanny(const char* inputFile);

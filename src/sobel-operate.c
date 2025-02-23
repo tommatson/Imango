@@ -62,7 +62,6 @@ int angleConverter(float x, float y){
     } else if (x > 0 && y < 0) {
         angle = 2 * pi - angle;
     }
-    printf("Angle: %d", pixelFinal((angle / (2 * pi)) * 255));
     return pixelFinal((angle / (2 * pi)) * 255);
 
     

@@ -67,7 +67,7 @@ bool recurseCheck(int i, char* label, int width, int height){
 }
 
 
-void hysteresisThresholding(const char* inputFile){
+char* hysteresisThresholding(const char* inputFile){
 
     // FILE WRITING ---------------------------
 
@@ -102,7 +102,7 @@ void hysteresisThresholding(const char* inputFile){
     strcat(outputFileName, "_hysteresisThresholding.bmp\0");
 
     FILE* outputBMP = fopen(outputFileName, "wb");
-    free(outputFileName);
+   
 
     fwrite(&bmpHeader, sizeof(BMPheader), 1, outputBMP);
     fwrite(&dibHeader, sizeof(DIBheader), 1, outputBMP);
@@ -218,6 +218,7 @@ void hysteresisThresholding(const char* inputFile){
     
     // Let the user know the process has been completed
     printf("\nHysteris thresholding has been written successfully!");
+    return outputFileName;
 
 }
 

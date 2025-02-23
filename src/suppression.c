@@ -76,7 +76,7 @@ RGB* suppressNonMax(RGB* uncalcKernel[], int angle){
     return pixel;
 }
 
-void localMaximumSuppressionConvert(const char* mInputFile, const char* aInputFile){
+char* localMaximumSuppressionConvert(const char* mInputFile, const char* aInputFile){
 
     // FILE WRITING ---------------------------
 
@@ -256,5 +256,6 @@ void localMaximumSuppressionConvert(const char* mInputFile, const char* aInputFi
     fclose(outputBMP);
     
     printf("\nLocal non maximum suppression has been written successfully!");
+    return outputFileName;
 
 }

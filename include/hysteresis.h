@@ -1,1 +1,1 @@
-void hysteresisThresholding(const char* inputFile);
+char* hysteresisThresholding(const char* inputFile);

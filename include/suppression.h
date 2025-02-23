@@ -1,1 +1,1 @@
-void localMaximumSuppressionConvert(const char* mInputFile, const char* aInputFile);
+char* localMaximumSuppressionConvert(const char* mInputFile, const char* aInputFile);
