@@ -46,40 +46,37 @@ typedef struct
 
 
 bool recurseCheck(int i, char* label, int width, int height){
-    sleep(1);
-    printf("\n\nNEW RECUrSE %d", i);
     // return true if it is a high or connected to a high, false if it is a low or is not connected to a high
-    if (label[i]== 'H'){
-        printf("I'm high");
-        return true;
-    } else if (label[i] == 'L'){
-        printf("I'm low");
-        return false;
-    }
+    if (label[i]== 'H') return true;
+    else if (label[i] == 'L') return false;
+    // Set our value to low so we do not get a recurse check called on ourselves
+    label[i] = 'L';
     // Calculate the following 3x3 kernel
     int offsets[8] = {-width - 1, -width, -width + 1, -1, 1, width-1, width, width+1};
     for(int j = 0; j < 8; j++){
+        bool outofBounds = false;
         int k = i + offsets[j];
         // Check if k is out of bounds
-        if (!(k < 0 || k >= height || (k >= width ? (k % (width * (k / width)) < 0) : false) || (k >= width ? (k % (width * (k / width)) > width) : false))){
-            // k is in bounds
-            printf(" In bounds");
-            // set our value to a low
-            label[i] = 'L';
+        // In this case I is at the top or bottom of the image
+        if ((k < 0) || (k >= width * height)) outofBounds = true;
+        else if(i % width == 0){
+            // I is on the far left
+            if (j == 0 || j == 3 || j == 5) outofBounds = true;    
+        } else if (i % width == width - 1){
+            // I is on the far right
+            if (j == 2 || j == 4 || j == 7) outofBounds = true;
+        }
+        // Use the boolean too see if k is in or out of bounds
+        if (!outofBounds){
+            // K is in bounds
             if (recurseCheck(k, label, width, height)){
                 label[i] = 'H';
                 return true;
-            } else {
-                printf("found a low for %d", i);
             }
-        } else {
-            printf(" out of bounds");
         }
     }
-    printf("I'm single");
-    label[i] = 'L';
+    // If nothing has been returned yet return false as we remain low
     return false;
-
 }
 
 
@@ -144,8 +141,8 @@ void hysteresisThresholding(const char* inputFile){
 
     // // We read the image row by row and then translate this into the H, M, L  1D array
     // Values will probably need tweaking later on
-    unsigned char lowerThreshold =  50;
-    unsigned char upperThreshold =  150;
+    unsigned char lowerThreshold =  25;
+    unsigned char upperThreshold =  30;
 
     // Creating a memory structure to store the level of each pixel
     // Divide width by 3 as each pixel takes up 3 values of r g b and we don't need that, use unsigned char to label them
@@ -182,27 +179,75 @@ void hysteresisThresholding(const char* inputFile){
         }
      
     }
+    free(row);
 
     // Making up data to test functionality
-    int label2Size = 5 * 5 * sizeof(char);
-    char* label2 = malloc(label2Size);
+ 
+    // char label2[25] = {'M', 'L', 'L', 'L', 'L', 'L', 'L', 'M', 'L', 'L', 'L', 'L', 'M', 'L', 'L', 'L', 'M', 'L', 'L', 'L', 'H', 'L', 'L', 'L', 'L'};
 
-    printf("Gyatt %d, %d", width, height);
+
+    // printf("Gyatt %d, %d", width, height);
+    // // Test iteration to perform threshodling
+    // for (int i = 0; i < strlen(label2); i++){
+    //     if(label2[i] == 'M'){
+    //         recurseCheck(i, &label2, 5, 5);  
+    //     }
+    // }
+    // printf("\n\n");
+    // for (int i = 0; i < strlen(label2); i++){
+    //     printf("%c", label2[i]);
+    // }
+
+    // tests over
+
     // Second iteration used perform thresholding
     for(int i = 0; i < abs(height * width); i++){
         if (label[i] == 'M'){
             // Medium found
-            printf("scooby do");
             recurseCheck(i, label, abs(width), abs(height));
         }
 
     }
 
+    // Write the data to the output file
+    unsigned char* outputRow = malloc(rowSize);
+
+    if (!outputRow){
+        perror("Output row memory allocation failed");
+        fclose(inputBMP);
+        fclose(outputBMP);
+        free(label);
+        exit(EXIT_FAILURE);
+    }
+
+    // Go back to the start of the file to begin writing to output
+    fseek(inputBMP, bmpHeader.offset, SEEK_SET);
+    
+    for(int i = 0; i < abs(height); i++){
+        fread(outputRow, rowSize, 1, inputBMP);
+        for (int j = 0; j < abs(width); j++){
+            RGB * pixel = (RGB *)&outputRow[j * 3];
+            // Red blue and green should be the same but just in case I will average them
+            int value = (pixel->red + pixel->blue + pixel->green) / 3;
+            if (label[i * width + j] == 'L'){
+                value = 0;
+            } else {
+                value = 255;
+            }
+            outputRow[j*3] = value;
+            outputRow[(j * 3) + 1] = value;
+            outputRow[(j * 3) + 2] = value;
+        }
+        fwrite(outputRow, rowSize, 1, outputBMP);
+    }
+    
     // printing it all for tests
     // for (int i = 0; i < abs(height * width); i++){
     //     if (i % (width * (i / width)))
     //     printf("%c", label[i]);
     // }
+    free(outputRow);
+    free(label);
     
 
     fclose(inputBMP);
