@@ -53,7 +53,10 @@ int main(int argc, char* argv[]){
     //sobelConvert(argv[1]);
     //localMaximumSuppressionConvert(argv[1], argv[2]);
     //hysteresisThresholding(argv[1]);
+    //sobelConvert(argv[1], 0);
+    //sobelConvert(argv[1], 1);
     applyCanny(argv[1]);
+    //sobelConvert(argv[1], 1);
     //printf("%f", Q_rsqrt(1 / atof(argv[1])));
     
     // //printf("%f", power(atoi(argv[1]), atof(argv[2])));

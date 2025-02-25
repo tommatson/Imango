@@ -9,6 +9,8 @@
 #include "suppression.h"
 #include "hysteresis.h"
 
+#define MAGNITUDE_AND_ANGLE 0
+#define X_AND_Y 1
 
 
 
@@ -18,7 +20,7 @@ char* applyCanny(const char* inputFile){
     char* gaussianName = gaussianConvert(greyscaleName, 3, 1);
     remove(greyscaleName);
     
-    sobelConvert(gaussianName);
+    sobelConvert(gaussianName, MAGNITUDE_AND_ANGLE);
     remove(gaussianName);
     // The sobel one is weird as it produces 2 files
     // Create the name for the magnitude file

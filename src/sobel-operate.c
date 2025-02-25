@@ -68,6 +68,40 @@ int angleConverter(float x, float y){
 
 }
 
+char* nameMagnitude(char* inputFile, int mode){
+    if (mode == 0){
+        // Create the magnitude output file
+        char* mOutputFileName = (char*)malloc(strlen(inputFile) + 11); // size of inputfile + "_magnitude" + \0
+        strncpy(mOutputFileName, inputFile, (strlen(inputFile) - 4));
+        strcat(mOutputFileName, "_magnitude.bmp\0");
+        return mOutputFileName;
+    }
+    else if (mode == 1){
+        // If the x and y has been chose, rename the file
+        char* mOutputFileName = (char*)malloc(strlen(inputFile) + 3); // size of inputfile + "_x" + \0
+        strncpy(mOutputFileName, inputFile, (strlen(inputFile) - 4));
+        strcat(mOutputFileName, "_x.bmp\0");
+        return mOutputFileName;
+    }
+}
+
+char* nameAngle(char* inputFile, int mode){
+    // Create the angle file
+    if (mode == 0){
+        char* aOutputFileName = (char*)malloc(strlen(inputFile) + 7); // size of inputfile + "_angle" + \0
+        strncpy(aOutputFileName, inputFile, (strlen(inputFile) - 4));
+        strcat(aOutputFileName, "_angle.bmp\0");
+        return aOutputFileName;
+    }
+    else if (mode == 1){
+        // If mode is 1, x and y is selected, angle becomes y and magnitude becomes x
+        char* aOutputFileName = (char*)malloc(strlen(inputFile) + 3); // size of inputfile + "_y" + \0
+        strncpy(aOutputFileName, inputFile, (strlen(inputFile) - 4));
+        strcat(aOutputFileName, "_y.bmp\0");
+        return aOutputFileName;
+    }
+}
+
 
 float* calculateSobelPixel(RGB* uncalcKernel[], int kernel[], int kernelWidth){
     // uncalcKernel stores our pixel rgb values, whilst kernel stores the values we multiply the kernel with
@@ -86,7 +120,7 @@ float* calculateSobelPixel(RGB* uncalcKernel[], int kernel[], int kernelWidth){
     return pixel;
 }
 
-void sobelConvert(const char* inputFile){
+void sobelConvert(const char* inputFile, int mode){
 
     int xKernel[9] = {1, 0, -1, 2, 0, -2, 1, 0, -1};
     int yKernel[9] = {1, 2, 1, 0, 0, 0, -1, -2, -1};
@@ -115,21 +149,16 @@ void sobelConvert(const char* inputFile){
         fclose(inputBMP);
         exit(EXIT_FAILURE);
     }
-    // Create the magnitude output file
-    char* mOutputFileName = (char*)malloc(strlen(inputFile) + 11); // size of inputfile + "_magnitude" + \0
-    strncpy(mOutputFileName, inputFile, (strlen(inputFile) - 4));
-    strcat(mOutputFileName, "_magnitude.bmp\0");
+
     
+    char* mOutputFileName = nameMagnitude(inputFile, mode);    
     FILE* mOutputBMP = fopen(mOutputFileName, "wb");
-    free(mOutputFileName);
+
     fwrite(&bmpHeader, sizeof(BMPheader), 1, mOutputBMP);
     fwrite(&dibHeader, sizeof(DIBheader), 1, mOutputBMP);
 
-    // Create the angle file
-    char* aOutputFileName = (char*)malloc(strlen(inputFile) + 7); // size of inputfile + "_angle" + \0
-    strncpy(aOutputFileName, inputFile, (strlen(inputFile) - 4));
-    strcat(aOutputFileName, "_angle.bmp\0");
-    
+
+    char* aOutputFileName = nameAngle(inputFile, mode);
     FILE* aOutputBMP = fopen(aOutputFileName, "wb");
     free(aOutputFileName);
     fwrite(&bmpHeader, sizeof(BMPheader), 1, aOutputBMP);
@@ -262,27 +291,24 @@ void sobelConvert(const char* inputFile){
             calculatedYPixel->green = round(abs(calculatedYPixelFloat[1]), 0) > 255 ? 255 : round(abs(calculatedYPixelFloat[1]), 0);
             calculatedYPixel->blue = round(abs(calculatedYPixelFloat[2]), 0) > 255 ? 255 : round(abs(calculatedYPixelFloat[2]), 0);
 
-            // mRow[j * 3] = squareRoot(calculatedXPixel->red * calculatedXPixel->red + calculatedYPixel->red * calculatedYPixel->red,  5);
-            // mRow[(j * 3) + 1] = squareRoot(calculatedXPixel->green * calculatedXPixel->green + calculatedYPixel->green * calculatedYPixel->green,  5);
-            // mRow[(j * 3) + 2] = squareRoot(calculatedXPixel->blue * calculatedXPixel->blue + calculatedYPixel->blue * calculatedYPixel->blue,  5);
-        
-            mRow[j * 3] = pixelFinal(Q_rsqrt(1.0 / (calculatedXPixel->red * calculatedXPixel->red + calculatedYPixel->red * calculatedYPixel->red)));
-            mRow[(j * 3) + 1] = pixelFinal(Q_rsqrt(1.0 / (calculatedXPixel->green * calculatedXPixel->green + calculatedYPixel->green * calculatedYPixel->green)));
-            mRow[(j * 3) + 2] = pixelFinal(Q_rsqrt(1.0 / (calculatedXPixel->blue * calculatedXPixel->blue + calculatedYPixel->blue * calculatedYPixel->blue)));
+            if (mode == 0){
+                mRow[j * 3] = pixelFinal(Q_rsqrt(1.0 / (calculatedXPixel->red * calculatedXPixel->red + calculatedYPixel->red * calculatedYPixel->red)));
+                mRow[(j * 3) + 1] = pixelFinal(Q_rsqrt(1.0 / (calculatedXPixel->green * calculatedXPixel->green + calculatedYPixel->green * calculatedYPixel->green)));
+                mRow[(j * 3) + 2] = pixelFinal(Q_rsqrt(1.0 / (calculatedXPixel->blue * calculatedXPixel->blue + calculatedYPixel->blue * calculatedYPixel->blue)));
 
-            aRow[j * 3] = angleConverter(calculatedYPixelFloat[0], calculatedXPixelFloat[0]);
-            aRow[(j * 3) + 1] = angleConverter(calculatedYPixelFloat[0], calculatedXPixelFloat[0]);
-            aRow[(j * 3) + 2] = angleConverter(calculatedYPixelFloat[0], calculatedXPixelFloat[0]);
+                aRow[j * 3] = angleConverter(calculatedYPixelFloat[0], calculatedXPixelFloat[0]);
+                aRow[(j * 3) + 1] = angleConverter(calculatedYPixelFloat[0], calculatedXPixelFloat[0]);
+                aRow[(j * 3) + 2] = angleConverter(calculatedYPixelFloat[0], calculatedXPixelFloat[0]);
+            } else if (mode == 1){
+                mRow[j * 3] = pixelFinal(calculatedXPixel->red);
+                mRow[(j * 3) + 1] = pixelFinal(calculatedXPixel->green);
+                mRow[(j * 3) + 2] = pixelFinal(calculatedXPixel->blue);
 
-            // mRow[j * 3] = calculatedXPixel->red;
-            // mRow[(j * 3) + 1] = calculatedXPixel->green;
-            // mRow[(j * 3) + 2] = calculatedXPixel->blue;
-
-            aRow[j * 3] = calculatedYPixel->red;
-            aRow[(j * 3) + 1] = calculatedYPixel->green;
-            aRow[(j * 3) + 2] = calculatedYPixel->blue;
-
-
+                aRow[j * 3] = pixelFinal(calculatedYPixel->red);
+                aRow[(j * 3) + 1] = pixelFinal(calculatedYPixel->green);
+                aRow[(j * 3) + 2] = pixelFinal(calculatedYPixel->blue);
+            }
+            
             // Free the data structure
             for (int k = 0; k < (kernelWidth * kernelWidth); k++){
                 free(uncalcKernel[k]);   
