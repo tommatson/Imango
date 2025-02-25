@@ -1,0 +1,1 @@
+char* cornerDetect(const char* xInputFile, const char* yInputFile);

@@ -9,6 +9,7 @@
 #include "suppression.h"
 #include "hysteresis.h"
 #include "canny.h"
+#include "shi-tomasi.h"
 
 // Kill me 
 extern unsigned int sleep(unsigned int seconds);
@@ -55,7 +56,8 @@ int main(int argc, char* argv[]){
     //hysteresisThresholding(argv[1]);
     //sobelConvert(argv[1], 0);
     //sobelConvert(argv[1], 1);
-    applyCanny(argv[1]);
+    //applyCanny(argv[1]);
+    cornerDetect(argv[1], argv[2]);
     //sobelConvert(argv[1], 1);
     //printf("%f", Q_rsqrt(1 / atof(argv[1])));
     
