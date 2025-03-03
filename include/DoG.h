@@ -1,0 +1,1 @@
+char* differenceOfGaussians(const char* inputFile);

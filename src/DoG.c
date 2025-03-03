@@ -3,9 +3,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include "mango-maths.h"
-#include "gaussian.c"
+#include "gaussian.h"
 
-#define pi 3.1415926535897932
 
 typedef struct {
     unsigned short type;
@@ -31,16 +30,15 @@ typedef struct {
 
 
 
-char* differenceOfGaussians(const char* inputFile, int kernelWidth, float stanDev){
-
-
-    // FILE WRITING ---------------------------
-
+char* differenceOfGaussians(const char* inputFile){
+    printf("file %s:", inputFile);
     FILE* inputBMP = fopen(inputFile, "rb");
+
     if (!inputBMP){
         perror("Error opening file, are you sure it exists?");
         exit(EXIT_FAILURE);
     }
+   
     BMPheader bmpHeader;
     fread(&bmpHeader, sizeof(BMPheader), 1, inputBMP);
 
@@ -76,20 +74,19 @@ char* differenceOfGaussians(const char* inputFile, int kernelWidth, float stanDe
     int width = dibHeader.width;
 
     // Create the filenames for the gaussians
+    char* gaussianOut1 = (char *)malloc(sizeof(char) * 6);
+    gaussianOut1[0] = 'G';
+    gaussianOut1[1] = '1';
+    gaussianOut1[2] = '.';
+    gaussianOut1[3] = 'b';
+    gaussianOut1[4] = 'm';
+    gaussianOut1[5] = 'p';
 
-    char* input1FileName = (char*)malloc(strlen(inputFile) + 2); // size of inputfile + "1" + \0
-    strncpy(input1FileName, inputFile, (strlen(inputFile) - 4));
-    strcat(input1FileName, "1.bmp\0");
+    char* gaussianOut1NoName = gaussianConvert(inputFile, 3, 1);
+    rename(gaussianOut1NoName, gaussianOut1);
+    char* gaussianOut2 = gaussianConvert(inputFile, 3, 2);
 
-    char* input2FileName = (char*)malloc(strlen(inputFile) + 2); // size of inputfile + "2 + \0
-    strncpy(input2FileName, inputFile, (strlen(inputFile) - 4));
-    strcat(input2FileName, "2.bmp\0");
 
-    char* gaussianOut1 = gaussianConvert(input1FileName, 3, 1);
-    char* gaussianOut2 = gaussianConvert(input2FileName, 3, 2);
-
-    free(input1FileName);
-    free(input2FileName);
 
     // Buffer creation for efficiency
     int imageSize = abs(height * width) * 3; 

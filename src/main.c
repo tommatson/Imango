@@ -10,7 +10,7 @@
 #include "hysteresis.h"
 #include "canny.h"
 #include "shi-tomasi.h"
-
+#include "DoG.h"
 // Kill me 
 extern unsigned int sleep(unsigned int seconds);
 // Kill me no more
@@ -57,9 +57,10 @@ int main(int argc, char* argv[]){
     //sobelConvert(argv[1], 0);
     //sobelConvert(argv[1], 1);
     //applyCanny(argv[1]);
-    cornerDetect(argv[1], argv[2]);
+    //cornerDetect(argv[1], argv[2]);
     //sobelConvert(argv[1], 1);
     //printf("%f", Q_rsqrt(1 / atof(argv[1])));
+    differenceOfGaussians(argv[1]);
     
     // //printf("%f", power(atoi(argv[1]), atof(argv[2])));
     // printf("\n%d", atof(argv[1]));
