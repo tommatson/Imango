@@ -6,6 +6,9 @@
 #include "gaussian.h"
 
 
+// havent finished yet
+
+
 typedef struct {
     unsigned short type;
     unsigned int size;
@@ -38,7 +41,7 @@ char* differenceOfGaussians(const char* inputFile){
         perror("Error opening file, are you sure it exists?");
         exit(EXIT_FAILURE);
     }
-   
+    
     BMPheader bmpHeader;
     fread(&bmpHeader, sizeof(BMPheader), 1, inputBMP);
 
