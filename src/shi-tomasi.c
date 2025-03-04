@@ -111,7 +111,7 @@ long double calculateMaximumMc(RGB* uncalcxKernel[], RGB* uncalcyKernel[], long 
     return maxMc;
 }
 
-char* cornerDetect(const char* xInputFile, const char* yInputFile){
+char* cornerDetect(char* xInputFile, char* yInputFile){
 
     // FILE WRITING ---------------------------
 

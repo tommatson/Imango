@@ -1,0 +1,1 @@
+char* applyCorner(const char* inputFile);

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "mango-maths.h"
 #include "gaussian.h"
+#include "greyscale.h"
 
 
 // havent finished yet
@@ -34,8 +35,9 @@ typedef struct {
 
 
 char* differenceOfGaussians(const char* inputFile){
-    printf("file %s:", inputFile);
-    FILE* inputBMP = fopen(inputFile, "rb");
+
+    char* greyscaleOut = greyscaleConvert(inputFile);
+    FILE* inputBMP = fopen(greyscaleOut, "rb");
 
     if (!inputBMP){
         perror("Error opening file, are you sure it exists?");
@@ -60,7 +62,7 @@ char* differenceOfGaussians(const char* inputFile){
         exit(EXIT_FAILURE);
     }
     // Create the output file
-    char* outputFileName = (char*)malloc(strlen(inputFile) + 5); // size of inputfile + "_gaussian" + \0
+    char* outputFileName = (char*)malloc(strlen(inputFile) + 5); // size of inputfile + "_DoG" + \0
     strncpy(outputFileName, inputFile, (strlen(inputFile) - 4));
     strcat(outputFileName, "_DoG.bmp\0");
     
@@ -85,16 +87,16 @@ char* differenceOfGaussians(const char* inputFile){
     gaussianOut1[4] = 'm';
     gaussianOut1[5] = 'p';
 
-    char* gaussianOut1NoName = gaussianConvert(inputFile, 3, 1);
+    char* gaussianOut1NoName = gaussianConvert(greyscaleOut, 3, 1);
     rename(gaussianOut1NoName, gaussianOut1);
-    char* gaussianOut2 = gaussianConvert(inputFile, 3, 2);
-
-
+    char* gaussianOut2 = gaussianConvert(greyscaleOut, 3, 2);
 
     // Buffer creation for efficiency
     int imageSize = abs(height * width) * 3; 
-    // Buffer to hold output
-    char* outputBuffer = (char *)malloc(imageSize);
+    // Buffer to hold output integers for each pixel
+    int* outputBuffer = (int *)malloc(abs(width * height) * sizeof(int));
+    // Buffer to hold the output RGB values
+    char* outputRGBBuffer = (char *)malloc(imageSize);
     // Buffer to hold pixel values
     char* gaussian1Buffer = (char *)malloc(imageSize);
     char* gaussian2Buffer = (char *)malloc(imageSize);
@@ -128,19 +130,38 @@ char* differenceOfGaussians(const char* inputFile){
     fread(gaussian1Buffer, imageSize, 1, gaussian1File);
     fread(gaussian2Buffer, imageSize, 1, gaussian2File);
 
+    long double imageMean = 0;
 
-    // Now iterate throw the gaussians and subtract the pixel values
+    // Now iterate throw the gaussians and subtract the pixel values, store the result within outputBuffer
     for (int i = 0; i < abs(height * width); i++){
-        outputBuffer[i * 3] = (gaussian1Buffer[i * 3] - gaussian2Buffer[i * 3] > 0 ?  gaussian1Buffer[i * 3] - gaussian2Buffer[i * 3] : 0);
-        outputBuffer[(i * 3) + 1] = (gaussian1Buffer[(i * 3) + 1] - gaussian2Buffer[(i * 3) + 1] > 0 ?  gaussian1Buffer[(i * 3) + 1] - gaussian2Buffer[(i * 3) + 1] : 0);
-        outputBuffer[(i * 3) + 2] = (gaussian1Buffer[(i * 3) + 2] - gaussian2Buffer[(i * 3) + 2] > 0 ?  gaussian1Buffer[(i * 3) + 2] - gaussian2Buffer[(i * 3) + 2] : 0);
+
+        outputBuffer[i] = gaussian1Buffer[i * 3] - gaussian2Buffer[i * 3];
+
+        // We compute the mean intensity of the image so we can then perform thresholding with it
+        imageMean += (long double) outputBuffer[i] / abs(width * height);
     }
-    fwrite(outputBuffer, imageSize, 1, outputBMP);
+
+    double k = 1.5;
+    // Perform thresholding
+    for (int i = 0; i < abs(height * width); i++){
+        if(outputBuffer[i] < k * imageMean){
+            // Anything below the threshold supress to black
+            outputRGBBuffer[(i * 3)] = 0;
+            outputRGBBuffer[(i * 3) + 1] = 0;
+            outputRGBBuffer[(i * 3) + 2] = 0;
+        } else {
+            // Otherwise set to white
+            outputRGBBuffer[(i * 3)] = 255;
+            outputRGBBuffer[(i * 3) + 1] = 255;
+            outputRGBBuffer[(i * 3) + 2] = 255;
+        }
+    }
+    fwrite(outputRGBBuffer, imageSize, 1, outputBMP);
 
     free(outputBuffer);
+    free(outputRGBBuffer);
     free(gaussian1Buffer);
     free(gaussian2Buffer);
-
 
     fclose(inputBMP);
     fclose(outputBMP);

@@ -1,0 +1,1 @@
+char* applyBlobDetection(const char* inputFile);

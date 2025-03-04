@@ -13,6 +13,11 @@ extern unsigned int sleep(unsigned int seconds);
 
 
 typedef struct {
+    char* name1;
+    char* name2;
+} returnNames;
+
+typedef struct {
     unsigned short type;
     unsigned int size;
     unsigned short reserve1;
@@ -120,7 +125,7 @@ float* calculateSobelPixel(RGB* uncalcKernel[], int kernel[], int kernelWidth){
     return pixel;
 }
 
-void sobelConvert(const char* inputFile, int mode){
+returnNames sobelConvert(const char* inputFile, int mode){
 
     int xKernel[9] = {1, 0, -1, 2, 0, -2, 1, 0, -1};
     int yKernel[9] = {1, 2, 1, 0, 0, 0, -1, -2, -1};
@@ -329,6 +334,9 @@ void sobelConvert(const char* inputFile, int mode){
     fclose(aOutputBMP);
     
     printf("\nSobel operator has been written successfully!");
+    returnNames outputNames = {nameMagnitude(inputFile, mode), nameAngle(inputFile, mode)};
+
+    return outputNames;
 
 }
 
