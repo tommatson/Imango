@@ -14,7 +14,6 @@
 extern unsigned int sleep(unsigned int seconds);
 // Kill me no more
 
-
 typedef struct {
     unsigned short type;
     unsigned int size;

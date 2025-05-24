@@ -11,6 +11,7 @@
 #include "canny.h"
 #include "shi-tomasi.h"
 #include "corner-detection.h"
+#include "blob-detection.h"
 #include "DoG.h"
 // Kill me 
 extern unsigned int sleep(unsigned int seconds);
@@ -64,6 +65,9 @@ int main(int argc, char* argv[]){
     
     // differenceOfGaussians(argv[1]);
     applyCorner(argv[1]);
+    applyCanny(argv[1]);
+    applyBlobDetection(argv[1]);
+    
 
 
 
